@@ -1,3 +1,4 @@
+import argparse
 
 import argparse, json, os
 from datetime import datetime
@@ -28,6 +29,7 @@ def add_expense(description: str, amount: int):
   expense = {
     "id": id,
     "date": date,
+    "updated_at": date,
     "description": description,
     "amount": amount,
   }
@@ -37,24 +39,32 @@ def add_expense(description: str, amount: int):
   print(f"Expense added successfully (ID: {id}).")
 
 
-def update_expense(id, description, amount):
+def update_expense(id, description:str=None, amount:float=None):
   expenses = load_expenses()
   date = datetime.now().strftime("%d/%m/%Y")
-  updated = False
   
   for expense in expenses:
     if expense["id"] == id:
-      expense["date"] = f"{date} (updated)"
-      expense["description"] = description
-      expense["amount"] = amount
-      updated = True
-      break
-  
-  if updated:
-    save_expenses(expenses)
-    print(f"Expense {id} updated successfully.")
+      expense["updated_at"] = date
+
+      if description is not None and amount is not None:
+        expense["description"] = description
+        expense["amount"] = amount
+        print(f"Expense {id} updated successfully.")
+        break
+      elif description is not None or amount is not None:
+        if description is not None:
+          expense["description"] = description
+        else:
+          expense["amount"] = amount
+        print(f"Expense {id} updated successfully.")
+        break
+      elif description is None and amount is None:
+        print("Please provide at least a description or an amount of the expense.")
+        break
   else:
     print(f"Expense with ID: {id} not found.")
+  save_expenses(expenses)
 
 
 def delete_expense(id):
@@ -92,35 +102,71 @@ def list_expenses():
     )
 
 
-def view_summary():
+def view_summary(month=None):
   expenses = load_expenses()
   summary = 0
 
-  for expense in expenses:
-    summary += expense["amount"]
-  
-  print(f"Total expenses: ${summary}")
+  if month is not None:
+    if month > 0 and month < 13:
+      for expense in expenses:
+        date_str = expense["date"]
+        date = datetime.strptime(date_str, '%d/%m/%Y')
+
+        if date.month == month:
+          summary += expense["amount"]
+      print(f"Total expenses for month {month}: ${summary}.")
+    else:
+      print("Please enter a month between 1 and 12.")
 
 
-def view_month_summary(month):
-  expenses = load_expenses()
-  month_summary = 0
+  elif month is None:
+    for expense in expenses:
+      summary += expense["amount"]
 
-  for expense in expenses:
-    date_str = expense["date"]
-    date = datetime.strptime(date_str, '%d/%m/%Y')
-
-    if date.month == month:
-      month_summary += expense["amount"]
-
-  print(f"Total expenses for month {month}: ${month_summary}.")
+    print(f"Total expenses: ${summary}")
 
 
-# add_expense("Esta es la expensa 1", 20)
-# add_expense("Esta es la expensa 2", 20)
-# add_expense("Esta es la expensa 3", 20)
-# update_expense(2, "actualizando expensa 2", 34)
-# delete_expense(4)
-# list_expenses()
-# view_summary()
-# view_month_summary(10)
+def main():
+  parser = argparse.ArgumentParser(description="CLI Expenses Tracker")
+  subparsers = parser.add_subparsers(dest="command", help="Command to run")
+
+  # Add expense
+  add_parser = subparsers.add_parser("add", help="Add new expense")
+  add_parser.add_argument("description", help="Expense description")
+  add_parser.add_argument("amount", type=float, help="Expense amount")
+
+  # Update expense
+  update_parser = subparsers.add_parser("update", help="Update an expense")
+  update_parser.add_argument("id", type=int, help="ID of the expense to update")
+  update_parser.add_argument("--description", help="New expense description")
+  update_parser.add_argument("--amount", type=float, help="New expense amount")
+
+  # Delete expense
+  delete_parser = subparsers.add_parser("delete", help="Delete an expense")
+  delete_parser.add_argument("id", type=int, help="ID of the expense to delete")
+
+  # List parser
+  list_parser = subparsers.add_parser("list", help="List expenses")
+
+  # View summary
+  summary_parser = subparsers.add_parser("view-summary", help="View summary of all expenses")
+  summary_parser.add_argument("--month", type=int, help="Month to filter the expense summary")
+
+
+  args = parser.parse_args()
+
+  if args.command == "add":
+    add_expense(args.description, args.amount)
+  elif args.command == "update":
+    update_expense(args.id, args.description, args.amount)
+  elif args.command == "delete":
+    delete_expense(args.id)
+  elif args.command == "list":
+    list_expenses()
+  elif args.command == "view-summary":
+    view_summary(args.month)
+  else:
+    parser.print_help()
+
+if __name__ == "__main__":
+    main()
