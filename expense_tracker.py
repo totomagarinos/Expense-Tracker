@@ -98,7 +98,7 @@ def list_expenses():
       f'{expense["id"]:<6}'
       f'{expense["date"]:<25}'
       f'{expense["description"]:<32}'
-      f'{expense["amount"]:<5}'
+      f'${expense["amount"]:<5}'
     )
 
 
