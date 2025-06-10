@@ -1,14 +1,14 @@
 from setuptools import setup
 
 setup(
-  name="expense-tracker",
+  name="sales-tracker",
   version="1.0.0",
-  description="A simple command-line expense tracker",
+  description="A simple command-line sales tracker",
   author="Juan Cruz Magariños",
-  py_modules=["expense_tracker"],
+  py_modules=["sales_tracker"],
   entry_points={
     "console_scripts": [
-      "expense-cli=expense_tracker:main",
+      "sales-cli=sales_tracker:main",
     ],
   }
 )
